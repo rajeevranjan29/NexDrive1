@@ -1,0 +1,105 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Book a Cab - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Book a Cab</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="pickup_location" class="form-label">Pickup Location</label>
+                            <input type="text" class="form-control" id="pickup_location" name="pickup_location" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="drop_location" class="form-label">Drop Location</label>
+                            <input type="text" class="form-control" id="drop_location" name="drop_location" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="scheduled_time" class="form-label">Pickup Time</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_time" name="scheduled_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicle_type" class="form-label">Vehicle Type</label>
+                            <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                                <option value="">Select a vehicle type</option>
+                                <option value="SEDAN">Sedan</option>
+                                <option value="SUV">SUV</option>
+                                <option value="LUXURY">Luxury</option>
+                                <option value="COMPACT">Compact</option>
+                            </select>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Book Now</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Vehicle Types and Features</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-car fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5>Sedan</h5>
+                                    <p class="mb-0">Comfortable for up to 4 passengers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-truck fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5>SUV</h5>
+                                    <p class="mb-0">Spacious for up to 6 passengers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-car-side fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5>Luxury</h5>
+                                    <p class="mb-0">Premium experience for up to 4 passengers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-car-alt fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h5>Compact</h5>
+                                    <p class="mb-0">Economic option for up to 4 passengers</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set minimum datetime for scheduled_time to current time
+    document.addEventListener('DOMContentLoaded', function() {
+        const scheduledTimeInput = document.getElementById('scheduled_time');
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        scheduledTimeInput.min = now.toISOString().slice(0, 16);
+    });
+</script>
+{% endblock %} 

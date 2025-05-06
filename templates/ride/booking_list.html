@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}My Bookings - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Bookings</h2>
+                {% if user.rider %}
+                <a href="{% url 'ride:create_booking' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Book a Ride
+                </a>
+                {% endif %}
+            </div>
+
+            {% if bookings %}
+            <div class="list-group">
+                {% for booking in bookings %}
+                <a href="{% url 'ride:booking_detail' booking.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">
+                            {% if user.rider %}
+                                {% if booking.driver %}
+                                    {{ booking.driver.user.get_full_name }}
+                                {% else %}
+                                    Waiting for Driver
+                                {% endif %}
+                            {% else %}
+                                {{ booking.rider.user.get_full_name }}
+                            {% endif %}
+                        </h5>
+                        <small class="text-muted">{{ booking.pickup_date|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="mb-1">
+                        <span class="badge bg-info mb-2">
+                            <i class="fas {% if booking.ride_type == 'airport' %}fa-plane
+                                         {% elif booking.ride_type == 'rental' %}fa-clock
+                                         {% else %}fa-route{% endif %}"></i>
+                            {{ booking.get_ride_type_display }}
+                        </span><br>
+                        <i class="fas fa-map-marker-alt text-danger"></i> {{ booking.pickup_location }}<br>
+                        {% if booking.drop_location %}
+                            <i class="fas fa-map-marker-alt text-success"></i> {{ booking.drop_location }}
+                        {% elif booking.rental_hours %}
+                            <i class="fas fa-clock text-success"></i> {{ booking.rental_hours }} hours
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge {% if booking.status == 'COMPLETED' %}bg-success
+                                         {% elif booking.status == 'CANCELLED' %}bg-danger
+                                         {% elif booking.status == 'CONFIRMED' %}bg-primary
+                                         {% else %}bg-warning{% endif %}">
+                            {{ booking.status }}
+                        </span>
+                        <span class="text-muted">₹{{ booking.get_total_price }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                {% if user.rider %}
+                    You haven't made any bookings yet. 
+                    <a href="{% url 'ride:create_booking' %}" class="alert-link">Book your first ride!</a>
+                {% else %}
+                    You don't have any trips yet.
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

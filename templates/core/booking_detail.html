@@ -1,0 +1,148 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Booking Details - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Booking #{{ booking.id }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Ride Details</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'COMPLETED' %}bg-success{% elif booking.status == 'CANCELLED' %}bg-danger{% elif booking.status == 'CONFIRMED' %}bg-primary{% else %}bg-warning{% endif %}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Booking Time:</th>
+                                    <td>{{ booking.booking_time|date:"M d, Y h:i A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Scheduled Time:</th>
+                                    <td>{{ booking.scheduled_time|date:"M d, Y h:i A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>From:</th>
+                                    <td>{{ booking.pickup_location }}</td>
+                                </tr>
+                                <tr>
+                                    <th>To:</th>
+                                    <td>{{ booking.drop_location }}</td>
+                                </tr>
+                                {% if booking.fare %}
+                                <tr>
+                                    <th>Fare:</th>
+                                    <td>₹{{ booking.fare }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Vehicle & Driver Details</h5>
+                            {% if booking.vehicle and booking.driver %}
+                                <table class="table">
+                                    <tr>
+                                        <th>Vehicle:</th>
+                                        <td>{{ booking.vehicle.model }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Type:</th>
+                                        <td>{{ booking.vehicle.get_vehicle_type_display }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vehicle Number:</th>
+                                        <td>{{ booking.vehicle.vehicle_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Driver Name:</th>
+                                        <td>{{ booking.driver.user.get_full_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Driver Rating:</th>
+                                        <td>
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= booking.driver.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            ({{ booking.driver.rating }})
+                                        </td>
+                                    </tr>
+                                </table>
+                            {% else %}
+                                <p class="text-muted">Driver and vehicle details will be assigned soon.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if booking.review %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Your Review</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="rating">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= booking.review.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="mb-0">{{ booking.review.comment }}</p>
+                        <small class="text-muted">Posted {{ booking.review.created_at|timesince }} ago</small>
+                    </div>
+                </div>
+            {% elif booking.status == 'COMPLETED' and not booking.review %}
+                <div class="card mt-4">
+                    <div class="card-body text-center">
+                        <h5>How was your ride?</h5>
+                        <p>Share your experience and help us improve our service.</p>
+                        <a href="{% url 'add_review' booking.id %}" class="btn btn-primary">
+                            <i class="fas fa-star"></i> Write a Review
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Need Help?</h5>
+                </div>
+                <div class="card-body">
+                    <p>Contact our support team for assistance:</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-phone text-primary me-2"></i> +91 1234567890</li>
+                        <li><i class="fas fa-envelope text-primary me-2"></i> support@nexdrive.com</li>
+                    </ul>
+                    <hr>
+                    <div class="d-grid">
+                        <a href="{% url 'my_bookings' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back to My Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,570 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Book a Ride - Nex Drive{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ride-type-selector {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .ride-type-selector:hover {
+        transform: translateY(-5px);
+    }
+    .ride-type-selector.active {
+        border: 2px solid #ff6b6b;
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
+    }
+    .pricing-info {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .form-section {
+        display: none;
+    }
+    .form-section.active {
+        display: block;
+    }
+    .map-container {
+        height: 300px;
+        width: 100%;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .location-input {
+        margin-bottom: 0.5rem;
+    }
+    .pac-container {
+        z-index: 1051 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Choose Your Ride Type</h2>
+    
+    <!-- Ride Type Selection Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card ride-type-selector {% if request.GET.type == 'airport' %}active{% endif %}" data-type="airport">
+                <div class="card-body text-center">
+                    <i class="fas fa-plane-departure fa-3x mb-3 text-primary"></i>
+                    <h4>Airport Transfer</h4>
+                    <div class="pricing-info mt-2">
+                        <p class="mb-1">Starting from ₹800</p>
+                        <small>Fixed rates, no hidden charges</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card ride-type-selector {% if request.GET.type == 'rental' %}active{% endif %}" data-type="rental">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                    <h4>Hourly Rental</h4>
+                    <div class="pricing-info mt-2">
+                        <p class="mb-1">₹300/hour</p>
+                        <small>Minimum 2 hours booking</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card ride-type-selector {% if request.GET.type == 'outstation' %}active{% endif %}" data-type="outstation">
+                <div class="card-body text-center">
+                    <i class="fas fa-route fa-3x mb-3 text-primary"></i>
+                    <h4>Outstation</h4>
+                    <div class="pricing-info mt-2">
+                        <p class="mb-1">Starting from ₹12/km</p>
+                        <small>Driver allowance included</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Forms -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Book Your Ride</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Airport Transfer Form -->
+                    <div class="form-section {% if request.GET.type == 'airport' %}active{% endif %}" id="airport-form">
+                        <form method="post" class="booking-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="ride_type" value="airport">
+                            
+                            <!-- Airport Direction -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="btn-group w-100" role="group" aria-label="Airport direction">
+                                        {% for value, label in form.airport_direction.field.choices %}
+                                        <input type="radio" class="btn-check" name="airport_direction" id="direction_{{ value }}" value="{{ value }}" {% if form.airport_direction.value == value %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="direction_{{ value }}">
+                                            <i class="fas {% if value == 'pickup' %}fa-plane-arrival{% else %}fa-plane-departure{% endif %} me-2"></i>
+                                            {{ label }}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Location Fields -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div id="pickup_location_group">
+                                        {{ form.pickup_location|as_crispy_field }}
+                                        <div id="pickup-map" class="map-container mb-3"></div>
+                                    </div>
+                                    <div id="drop_location_group">
+                                        {{ form.drop_location|as_crispy_field }}
+                                        <div id="drop-map" class="map-container mb-3"></div>
+                                    </div>
+                                    {{ form.pickup_lat }}
+                                    {{ form.pickup_lng }}
+                                    {{ form.drop_lat }}
+                                    {{ form.drop_lng }}
+                                </div>
+                            </div>
+
+                            <!-- Flight Details -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.flight_number|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ form.pickup_date|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.pickup_time|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Vehicle Type -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.vehicle_type|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.notes|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Hidden Fields -->
+                            {{ form.distance }}
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plane"></i> Book Airport Transfer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Rental Form -->
+                    <div class="form-section {% if request.GET.type == 'rental' %}active{% endif %}" id="rental-form">
+                        <form method="post" class="booking-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="ride_type" value="rental">
+                            
+                            <!-- Pickup Location -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.pickup_location|as_crispy_field }}
+                                    <div id="rental-pickup-map" class="map-container"></div>
+                                    {{ form.pickup_lat }}
+                                    {{ form.pickup_lng }}
+                                </div>
+                            </div>
+
+                            <!-- Rental Hours -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.rental_hours|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ form.pickup_date|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.pickup_time|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Vehicle Type -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.vehicle_type|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.notes|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Hidden Fields -->
+                            {{ form.distance }}
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-clock"></i> Book Rental
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Outstation Form -->
+                    <div class="form-section {% if request.GET.type == 'outstation' %}active{% endif %}" id="outstation-form">
+                        <form method="post" class="booking-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="ride_type" value="outstation">
+                            
+                            <!-- Pickup Location -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.pickup_location|as_crispy_field }}
+                                    <div id="outstation-pickup-map" class="map-container"></div>
+                                    {{ form.pickup_lat }}
+                                    {{ form.pickup_lng }}
+                                </div>
+                            </div>
+
+                            <!-- Drop Location -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.drop_location|as_crispy_field }}
+                                    <div id="drop-map" class="map-container"></div>
+                                    {{ form.drop_lat }}
+                                    {{ form.drop_lng }}
+                                </div>
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ form.pickup_date|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.pickup_time|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Return Date -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.return_date|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Vehicle Type -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.vehicle_type|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    {{ form.notes|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- Hidden Fields -->
+                            {{ form.distance }}
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-route"></i> Book Outstation
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+<script>
+// Default airport location
+const PATNA_AIRPORT = {
+    address: "Jay Prakash Narayan International Airport, Patna, Bihar, India",
+    lat: 25.5913,
+    lng: 85.0880
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all ride type selectors
+    const rideTypeSelectors = document.querySelectorAll('.ride-type-selector');
+    const formSections = document.querySelectorAll('.form-section');
+
+    // Add click event to each selector
+    rideTypeSelectors.forEach(selector => {
+        selector.addEventListener('click', function() {
+            // Remove active class from all selectors and forms
+            rideTypeSelectors.forEach(s => s.classList.remove('active'));
+            formSections.forEach(f => f.classList.remove('active'));
+
+            // Add active class to clicked selector and corresponding form
+            this.classList.add('active');
+            const formType = this.getAttribute('data-type');
+            const formSection = document.getElementById(`${formType}-form`);
+            formSection.classList.add('active');
+
+            // Initialize maps for the newly active form
+            initializeFormMaps(formSection);
+        });
+    });
+
+    // Initialize maps based on active form
+    function initializeMap(mapElement, input, form) {
+        if (!mapElement) return null;
+        
+        const mapInstance = new google.maps.Map(mapElement, {
+            center: { lat: 25.5941, lng: 85.1376 }, // Patna coordinates
+            zoom: 13,
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+
+        const marker = new google.maps.Marker({
+            map: mapInstance,
+            draggable: true
+        });
+
+        // For airport form, handle readonly fields
+        if (form.id === 'airport-form') {
+            const direction = form.querySelector('input[name="airport_direction"]:checked').value;
+            const isAirportField = (direction === 'pickup' && input.name === 'drop_location') ||
+                                 (direction === 'drop' && input.name === 'pickup_location');
+            
+            if (isAirportField) {
+                // Set airport location
+                const airportLocation = new google.maps.LatLng(PATNA_AIRPORT.lat, PATNA_AIRPORT.lng);
+                mapInstance.setCenter(airportLocation);
+                marker.setPosition(airportLocation);
+                marker.setDraggable(false);
+                return { map: mapInstance, marker };
+            }
+        }
+
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        
+        // Handle place selection
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (place.geometry) {
+                mapInstance.setCenter(place.geometry.location);
+                marker.setPosition(place.geometry.location);
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                
+                // Set hidden field values
+                if (input.name === 'pickup_location') {
+                    form.querySelector('input[name="pickup_lat"]').value = lat;
+                    form.querySelector('input[name="pickup_lng"]').value = lng;
+                } else if (input.name === 'drop_location') {
+                    form.querySelector('input[name="drop_lat"]').value = lat;
+                    form.querySelector('input[name="drop_lng"]').value = lng;
+                }
+                
+                updateDistance(form);
+            }
+        });
+
+        // Handle marker drag
+        marker.addListener('dragend', function() {
+            const position = marker.getPosition();
+            const lat = position.lat();
+            const lng = position.lng();
+            
+            // Set hidden field values
+            if (input.name === 'pickup_location') {
+                form.querySelector('input[name="pickup_lat"]').value = lat;
+                form.querySelector('input[name="pickup_lng"]').value = lng;
+            } else if (input.name === 'drop_location') {
+                form.querySelector('input[name="drop_lat"]').value = lat;
+                form.querySelector('input[name="drop_lng"]').value = lng;
+            }
+            
+            updateDistance(form);
+            reverseGeocode(position, input);
+        });
+
+        return { map: mapInstance, marker, autocomplete };
+    }
+
+    // Initialize maps for a specific form
+    function initializeFormMaps(formSection) {
+        const pickupInput = formSection.querySelector('input[name="pickup_location"]');
+        const dropInput = formSection.querySelector('input[name="drop_location"]');
+        const formType = formSection.id.replace('-form', '');
+
+        let pickupMapElement;
+        if (formType === 'airport') {
+            pickupMapElement = formSection.querySelector('#pickup-map');
+        } else if (formType === 'rental') {
+            pickupMapElement = formSection.querySelector('#rental-pickup-map');
+        } else if (formType === 'outstation') {
+            pickupMapElement = formSection.querySelector('#outstation-pickup-map');
+        }
+
+        if (pickupInput && pickupMapElement) {
+            initializeMap(pickupMapElement, pickupInput, formSection);
+        }
+
+        if (dropInput) {
+            const dropMapElement = formSection.querySelector('#drop-map');
+            if (dropMapElement) {
+                initializeMap(dropMapElement, dropInput, formSection);
+            }
+        }
+    }
+
+    // Update distance calculation
+    function updateDistance(form) {
+        const pickupLat = form.querySelector('input[name="pickup_lat"]')?.value;
+        const pickupLng = form.querySelector('input[name="pickup_lng"]')?.value;
+        const dropLat = form.querySelector('input[name="drop_lat"]')?.value;
+        const dropLng = form.querySelector('input[name="drop_lng"]')?.value;
+        const distanceInput = form.querySelector('input[name="distance"]');
+
+        if (pickupLat && pickupLng && dropLat && dropLng) {
+            const service = new google.maps.DistanceMatrixService();
+            service.getDistanceMatrix({
+                origins: [{ lat: parseFloat(pickupLat), lng: parseFloat(pickupLng) }],
+                destinations: [{ lat: parseFloat(dropLat), lng: parseFloat(dropLng) }],
+                travelMode: google.maps.TravelMode.DRIVING,
+            }, function(response, status) {
+                if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                    const distanceInMeters = response.rows[0].elements[0].distance.value;
+                    const distanceInKm = distanceInMeters / 1000;
+                    if (distanceInput) {
+                        distanceInput.value = distanceInKm;
+                        console.log('Distance updated:', distanceInKm, 'km');
+                    }
+                }
+            });
+        }
+    }
+
+    // Reverse geocoding function
+    function reverseGeocode(position, input) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: position }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                input.value = results[0].formatted_address;
+            }
+        });
+    }
+
+    // Add form submission handler to log values
+    document.querySelectorAll('.booking-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Log form data before submission
+            const formData = new FormData(form);
+            console.log('Form data being submitted:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+        });
+    });
+
+    // Initialize maps for the initially active form
+    const activeForm = document.querySelector('.form-section.active');
+    if (activeForm) {
+        initializeFormMaps(activeForm);
+    }
+
+    // Handle airport direction change
+    const airportForm = document.getElementById('airport-form');
+    if (airportForm) {
+        const directionInputs = airportForm.querySelectorAll('input[name="airport_direction"]');
+        const pickupLocationGroup = airportForm.querySelector('#pickup_location_group');
+        const dropLocationGroup = airportForm.querySelector('#drop_location_group');
+        const pickupLocationLabel = airportForm.querySelector('label[for="id_pickup_location"]');
+        const dropLocationLabel = airportForm.querySelector('label[for="id_drop_location"]');
+
+        function updateLocationLabels(direction) {
+            if (direction === 'pickup') {
+                pickupLocationLabel.textContent = 'Pickup Location (Non-Airport)';
+                dropLocationLabel.textContent = 'Airport Terminal';
+            } else {
+                pickupLocationLabel.textContent = 'Airport Terminal';
+                dropLocationLabel.textContent = 'Drop Location';
+            }
+        }
+
+        function setAirportLocation(direction) {
+            const pickupLocationInput = pickupLocationGroup.querySelector('input[type="text"]');
+            const dropLocationInput = dropLocationGroup.querySelector('input[type="text"]');
+            
+            // Reset all fields first
+            pickupLocationInput.value = '';
+            dropLocationInput.value = '';
+            airportForm.querySelector('input[name="pickup_lat"]').value = '';
+            airportForm.querySelector('input[name="pickup_lng"]').value = '';
+            airportForm.querySelector('input[name="drop_lat"]').value = '';
+            airportForm.querySelector('input[name="drop_lng"]').value = '';
+
+            // Set airport location based on direction
+            if (direction === 'pickup') {
+                dropLocationInput.value = PATNA_AIRPORT.address;
+                dropLocationInput.readOnly = true;
+                pickupLocationInput.readOnly = false;
+                airportForm.querySelector('input[name="drop_lat"]').value = PATNA_AIRPORT.lat;
+                airportForm.querySelector('input[name="drop_lng"]').value = PATNA_AIRPORT.lng;
+            } else {
+                pickupLocationInput.value = PATNA_AIRPORT.address;
+                pickupLocationInput.readOnly = true;
+                dropLocationInput.readOnly = false;
+                airportForm.querySelector('input[name="pickup_lat"]').value = PATNA_AIRPORT.lat;
+                airportForm.querySelector('input[name="pickup_lng"]').value = PATNA_AIRPORT.lng;
+            }
+
+            // Reinitialize maps
+            initializeFormMaps(airportForm);
+        }
+
+        // Initialize labels and airport location based on default selection
+        const initialDirection = Array.from(directionInputs).find(input => input.checked)?.value || 'pickup';
+        updateLocationLabels(initialDirection);
+        setAirportLocation(initialDirection);
+
+        // Update when direction changes
+        directionInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const direction = this.value;
+                updateLocationLabels(direction);
+                setAirportLocation(direction);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %} 

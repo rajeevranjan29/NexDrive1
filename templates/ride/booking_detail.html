@@ -1,0 +1,120 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Booking Details - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Booking #{{ booking.id }}</h3>
+                    <span class="badge {% if booking.status == 'COMPLETED' %}bg-success
+                                     {% elif booking.status == 'CANCELLED' %}bg-danger
+                                     {% elif booking.status == 'CONFIRMED' %}bg-primary
+                                     {% else %}bg-warning{% endif %}">
+                        {{ booking.status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Rider Details</h5>
+                            <p>
+                                <strong>Name:</strong> {{ booking.rider.user.get_full_name }}<br>
+                                <strong>Phone:</strong> {{ booking.rider.phone_number }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Driver Details</h5>
+                            {% if booking.driver %}
+                            <p>
+                                <strong>Name:</strong> {{ booking.driver.user.get_full_name }}<br>
+                                <strong>Phone:</strong> {{ booking.driver.phone_number }}<br>
+                                <strong>Rating:</strong> {{ booking.driver.rating }}
+                            </p>
+                            {% else %}
+                            <p class="text-muted">Waiting for driver assignment</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5>Ride Details</h5>
+                            <p>
+                                <strong>Pickup:</strong> {{ booking.pickup_location }}<br>
+                                <strong>Drop-off:</strong> {{ booking.drop_location }}<br>
+                                <strong>Scheduled Time:</strong> {{ booking.scheduled_time }}<br>
+                                {% if booking.completed_time %}
+                                <strong>Completed Time:</strong> {{ booking.completed_time }}<br>
+                                {% endif %}
+                                {% if booking.distance %}
+                                <strong>Distance:</strong> {{ booking.distance }} km<br>
+                                {% endif %}
+                                {% if booking.fare %}
+                                <strong>Fare:</strong> ₹{{ booking.fare }}<br>
+                                <strong>Payment Status:</strong> 
+                                {% if booking.payment_status %}
+                                <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if booking.status == 'CANCELLED' %}
+                    <div class="alert alert-danger">
+                        <h5>Cancellation Reason:</h5>
+                        <p>{{ booking.cancellation_reason|default:"No reason provided" }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if booking.status == 'COMPLETED' and user.rider and not booking.review %}
+                    <div class="alert alert-info">
+                        <p>How was your ride? 
+                            <a href="{% url 'ride:create_review' booking.pk %}" class="alert-link">
+                                Leave a review
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if booking.review %}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Review</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2">Rating:</div>
+                                {% for i in "12345"|make_list %}
+                                <i class="fas fa-star {% if forloop.counter <= booking.review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            {% if booking.review.comment %}
+                            <p class="mb-0">{{ booking.review.comment }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{% url 'ride:booking_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Bookings
+                        </a>
+                        {% if user.rider and booking.status == 'PENDING' %}
+                        <a href="{% url 'ride:cancel_booking' booking.pk %}" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Cancel Booking
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

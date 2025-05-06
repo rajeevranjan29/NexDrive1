@@ -1,0 +1,215 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4">Welcome to Nex Drive</h1>
+        <p class="lead">Your trusted cab service provider in Patna</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'ride:create_booking' %}" class="btn btn-primary btn-lg">Book a Cab Now</a>
+        {% else %}
+            <div class="mt-4">
+                <a href="{% url 'register' %}" class="btn btn-primary btn-lg mx-2">Register as Rider</a>
+                <a href="{% url 'driver_register' %}" class="btn btn-outline-light btn-lg mx-2">Join as Driver</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-car fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Comfortable Rides</h3>
+                    <p class="card-text">Experience comfortable and safe rides with our well-maintained fleet of vehicles.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">24/7 Service</h3>
+                    <p class="card-text">Available round the clock to serve you whenever you need a ride.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Safe & Secure</h3>
+                    <p class="card-text">Your safety is our priority. All our drivers are verified and trained.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h2>Why Choose Nex Drive?</h2>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Professional and courteous drivers
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Clean and well-maintained vehicles
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Competitive and transparent pricing
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Easy booking through our platform
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    24/7 customer support
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h2>Our Coverage Area</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">We serve all major areas in Patna:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Patna Junction</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Gandhi Maidan</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Boring Road</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Bailey Road</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Kankarbagh</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Rajendra Nagar</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Patna Airport</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Danapur</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Our Services</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-plane-departure fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Airport Transfer</h3>
+                    <p class="card-text">Reliable airport pickup and drop-off services. Never miss your flight with our punctual service.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="fas fa-check text-success me-2"></i>Fixed competitive rates</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Flight tracking</li>
+                        <li><i class="fas fa-check text-success me-2"></i>24/7 availability</li>
+                    </ul>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'ride:create_booking' %}?type=airport" class="btn btn-primary mt-3">Book Airport Ride</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Hourly Rental</h3>
+                    <p class="card-text">Flexible hourly rental service for local trips, meetings, and shopping.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="fas fa-check text-success me-2"></i>Minimum 2 hours booking</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Pay per hour used</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Multiple stops allowed</li>
+                    </ul>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'ride:create_booking' %}?type=rental" class="btn btn-primary mt-3">Book Rental</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-route fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title">Outstation</h3>
+                    <p class="card-text">Comfortable intercity travel with experienced drivers for your long-distance journeys.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="fas fa-check text-success me-2"></i>Round trip options</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Multiple vehicle choices</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Experienced drivers</li>
+                    </ul>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'ride:create_booking' %}?type=outstation" class="btn btn-primary mt-3">Book Outstation</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Why Choose Nex Drive?</h2>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Professional and courteous drivers
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Clean and well-maintained vehicles
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Competitive and transparent pricing
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Easy booking through our platform
+                </li>
+                <li class="list-group-item">
+                    <i class="fas fa-check text-success me-2"></i>
+                    24/7 customer support
+                </li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h2>Our Coverage Area</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">We serve all major areas in Patna:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Patna Junction</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Gandhi Maidan</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Boring Road</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Bailey Road</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Kankarbagh</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Rajendra Nagar</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Patna Airport</li>
+                                <li><i class="fas fa-map-marker-alt text-primary me-2"></i>Danapur</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

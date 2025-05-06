@@ -1,0 +1,234 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Driver Dashboard - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Driver Status Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    {% if driver.profile_picture %}
+                        <img src="{{ driver.profile_picture.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="max-width: 100px;">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <h4 class="mb-1">{{ driver.user.get_full_name }}</h4>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-id-card"></i> License: {{ driver.license_number }}
+                    </p>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-phone"></i> {{ driver.phone_number }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="form-check form-switch">
+                        <form method="post" action="{% url 'driver:profile' %}" id="availabilityForm">
+                            {% csrf_token %}
+                            <input class="form-check-input" type="checkbox" role="switch" id="is_available" name="is_available" {% if is_available %}checked{% endif %} onchange="this.form.submit()">
+                            <label class="form-check-label" for="is_available">
+                                Available for Rides
+                            </label>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Rating</h6>
+                    <h3>
+                        <i class="fas fa-star text-warning"></i>
+                        {{ rating|floatformat:1 }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Trips</h6>
+                    <h3>
+                        <i class="fas fa-route text-primary"></i>
+                        {{ total_trips }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Earnings</h6>
+                    <h3>
+                        <i class="fas fa-rupee-sign text-success"></i>
+                        {{ total_earnings|floatformat:2 }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Status</h6>
+                    <h3>
+                        {% if is_available %}
+                            <i class="fas fa-toggle-on text-success"></i>
+                            Active
+                        {% else %}
+                            <i class="fas fa-toggle-off text-danger"></i>
+                            Inactive
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicle Information -->
+    {% if vehicle %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-car"></i> Vehicle Information</h5>
+            <a href="{% url 'driver:vehicle' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-edit"></i> Manage Vehicle
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Model:</strong> {{ vehicle.model }}</p>
+                    <p><strong>Vehicle Number:</strong> {{ vehicle.vehicle_number }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Type:</strong> {{ vehicle.get_vehicle_type_display }}</p>
+                    <p><strong>Capacity:</strong> {{ vehicle.capacity }} passengers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Current Bookings -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Current Bookings</h5>
+            <a href="{% url 'driver:bookings' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list"></i> View All Bookings
+            </a>
+        </div>
+        <div class="card-body">
+            {% if current_bookings %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pickup</th>
+                                <th>Drop</th>
+                                <th>Date & Time</th>
+                                <th>Rider</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in current_bookings %}
+                            <tr>
+                                <td>{{ booking.pickup_location }}</td>
+                                <td>{{ booking.drop_location }}</td>
+                                <td>
+                                    {{ booking.pickup_date }}<br>
+                                    <small class="text-muted">{{ booking.pickup_time }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if booking.rider.profile_picture %}
+                                            <img src="{{ booking.rider.profile_picture.url }}" alt="Rider" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                        {% else %}
+                                            <i class="fas fa-user-circle fa-2x me-2 text-secondary"></i>
+                                        {% endif %}
+                                        {{ booking.rider.user.get_full_name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge {% if booking.status == 'PENDING' %}bg-warning
+                                               {% elif booking.status == 'CONFIRMED' %}bg-info
+                                               {% elif booking.status == 'COMPLETED' %}bg-success
+                                               {% elif booking.status == 'CANCELLED' %}bg-danger
+                                               {% endif %}">
+                                        {{ booking.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if booking.status == 'PENDING' %}
+                                        <button class="btn btn-sm btn-success me-1" onclick="updateBookingStatus('{{ booking.id }}', 'CONFIRMED')">
+                                            <i class="fas fa-check"></i> Accept
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="updateBookingStatus('{{ booking.id }}', 'CANCELLED')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    {% elif booking.status == 'CONFIRMED' %}
+                                        <button class="btn btn-sm btn-success" onclick="updateBookingStatus('{{ booking.id }}', 'COMPLETED')">
+                                            <i class="fas fa-flag-checkered"></i> Complete
+                                        </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                    <h5>No current bookings</h5>
+                    <p class="text-muted">You don't have any active bookings at the moment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Auto-submit availability form when toggle is changed
+    document.getElementById('is_available').addEventListener('change', function() {
+        document.getElementById('availabilityForm').submit();
+    });
+
+    // Booking status update function
+    function updateBookingStatus(bookingId, status) {
+        if (confirm('Are you sure you want to ' + status.toLowerCase() + ' this booking?')) {
+            fetch(`/driver/bookings/${bookingId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update booking status. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %} 

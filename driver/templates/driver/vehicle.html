@@ -1,0 +1,163 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Vehicle Information - Nex Drive{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-car"></i> My Vehicles</h4>
+                    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                        <i class="fas fa-plus"></i> Add New Vehicle
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if vehicles %}
+                        <div class="row">
+                            {% for vehicle in vehicles %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100 {% if vehicle.is_active %}border-success{% endif %}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="card-title">{{ vehicle.model }}</h5>
+                                                <h6 class="card-subtitle mb-2 text-muted">{{ vehicle.vehicle_number }}</h6>
+                                            </div>
+                                            {% if vehicle.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% endif %}
+                                        </div>
+                                        <hr>
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Vehicle Type</small>
+                                                <span>{{ vehicle.vehicle_type }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Capacity</small>
+                                                <span>{{ vehicle.capacity }} seats</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">AC Available</small>
+                                                <span>{% if vehicle.ac_available %}Yes{% else %}No{% endif %}</span>
+                                            </div>
+                                            <div class="col-12">
+                                                <small class="text-muted d-block">Insurance Valid Till</small>
+                                                <span>{{ vehicle.insurance_valid_till }}</span>
+                                            </div>
+                                            <div class="col-12">
+                                                <small class="text-muted d-block">Registration Valid Till</small>
+                                                <span>{{ vehicle.registration_valid_till }}</span>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editVehicle('{{ vehicle.id }}')">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            {% if not vehicle.is_active %}
+                                            <button class="btn btn-sm btn-success" onclick="setActiveVehicle('{{ vehicle.id }}')">
+                                                <i class="fas fa-check"></i> Set as Active
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-car fa-4x text-muted mb-3"></i>
+                            <h5>No vehicles found</h5>
+                            <p class="text-muted">Add your first vehicle to start accepting rides.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Vehicle Modal -->
+<div class="modal fade" id="vehicleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vehicleModalTitle">Add New Vehicle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="vehicleForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ form|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Initialize vehicle modal
+    const vehicleModal = new bootstrap.Modal(document.getElementById('vehicleModal'));
+    
+    // Function to edit vehicle
+    function editVehicle(vehicleId) {
+        fetch(`/driver/vehicle/${vehicleId}/edit/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('vehicleModalTitle').textContent = 'Edit Vehicle';
+                    // Populate form fields with vehicle data
+                    Object.keys(data.vehicle).forEach(key => {
+                        const field = document.querySelector(`[name="${key}"]`);
+                        if (field) field.value = data.vehicle[key];
+                    });
+                    vehicleModal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load vehicle data');
+            });
+    }
+    
+    // Function to set active vehicle
+    function setActiveVehicle(vehicleId) {
+        if (confirm('Are you sure you want to set this as your active vehicle?')) {
+            fetch(`/driver/vehicle/${vehicleId}/set-active/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update active vehicle');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred');
+            });
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %} 

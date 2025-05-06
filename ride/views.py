@@ -8,6 +8,7 @@ from core.models import Driver
 from django.utils import timezone
 from .forms import BookingForm, ReviewForm
 from django.http import JsonResponse
+import json
 
 @login_required
 def create_booking(request):
@@ -148,3 +149,51 @@ def review_list(request):
     else:
         reviews = []
     return render(request, 'ride/review_list.html', {'reviews': reviews})
+
+@login_required
+def update_booking_status(request, booking_id):
+    if not request.method == 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    
+    try:
+        data = json.loads(request.body)
+        new_status = data.get('status')
+        
+        if not new_status:
+            return JsonResponse({'success': False, 'error': 'Status not provided'})
+        
+        booking = get_object_or_404(Booking, id=booking_id)
+        
+        # Verify the user is a driver
+        if not hasattr(request.user, 'driver'):
+            return JsonResponse({'success': False, 'error': 'Only drivers can update booking status'})
+        
+        driver = request.user.driver
+        
+        # Handle different status updates
+        if new_status == 'CONFIRMED':
+            # Only allow confirming available bookings
+            if booking.status != 'pending' or booking.driver is not None:
+                return JsonResponse({'success': False, 'error': 'This booking is not available'})
+            
+            # Assign the booking to this driver
+            booking.driver = driver
+            booking.status = 'confirmed'
+            
+        elif new_status == 'COMPLETED':
+            # Only allow completing confirmed bookings assigned to this driver
+            if booking.status != 'confirmed' or booking.driver != driver:
+                return JsonResponse({'success': False, 'error': 'Cannot complete this booking'})
+            
+            booking.status = 'completed'
+            
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid status'})
+        
+        booking.save()
+        return JsonResponse({'success': True})
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

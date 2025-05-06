@@ -7,7 +7,8 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm">
+            <!-- My Bookings Section -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> My Bookings</h4>
                     <div class="btn-group">
@@ -19,7 +20,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    {% if bookings %}
+                    {% if my_bookings %}
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead class="table-light">
@@ -35,7 +36,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for booking in bookings %}
+                                    {% for booking in my_bookings %}
                                     <tr class="booking-row" data-status="{{ booking.status|lower }}">
                                         <td>#{{ booking.id }}</td>
                                         <td>
@@ -55,24 +56,16 @@
                                             <small class="text-muted">{{ booking.pickup_time }}</small>
                                         </td>
                                         <td>
-                                            <span class="badge {% if booking.status == 'PENDING' %}bg-warning
-                                                       {% elif booking.status == 'CONFIRMED' %}bg-info
-                                                       {% elif booking.status == 'COMPLETED' %}bg-success
+                                            <span class="badge {% if booking.status == 'COMPLETED' %}bg-success
                                                        {% elif booking.status == 'CANCELLED' %}bg-danger
-                                                       {% endif %}">
+                                                       {% elif booking.status == 'CONFIRMED' %}bg-primary
+                                                       {% else %}bg-warning{% endif %}">
                                                 {{ booking.status }}
                                             </span>
                                         </td>
-                                        <td>₹{{ booking.fare }}</td>
+                                        <td>₹{{ booking.get_total_price }}</td>
                                         <td>
-                                            {% if booking.status == 'PENDING' %}
-                                                <button class="btn btn-sm btn-success me-1" onclick="updateBookingStatus('{{ booking.id }}', 'CONFIRMED')">
-                                                    <i class="fas fa-check"></i> Accept
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="updateBookingStatus('{{ booking.id }}', 'CANCELLED')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            {% elif booking.status == 'CONFIRMED' %}
+                                            {% if booking.status == 'CONFIRMED' %}
                                                 <button class="btn btn-sm btn-success" onclick="updateBookingStatus('{{ booking.id }}', 'COMPLETED')">
                                                     <i class="fas fa-flag-checkered"></i> Complete
                                                 </button>
@@ -88,6 +81,84 @@
                             <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
                             <h5>No bookings found</h5>
                             <p class="text-muted">You don't have any bookings yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Available Bookings Section -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-list"></i> Available Bookings</h4>
+                </div>
+                <div class="card-body">
+                    {% if available_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Rider</th>
+                                        <th>Type</th>
+                                        <th>Pickup Location</th>
+                                        <th>Drop Location</th>
+                                        <th>Date & Time</th>
+                                        <th>Fare</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in available_bookings %}
+                                    <tr>
+                                        <td>#{{ booking.id }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if booking.rider.profile_picture %}
+                                                    <img src="{{ booking.rider.profile_picture.url }}" alt="Rider" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                                {% else %}
+                                                    <i class="fas fa-user-circle fa-2x me-2 text-secondary"></i>
+                                                {% endif %}
+                                                {{ booking.rider.user.get_full_name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <i class="fas {% if booking.ride_type == 'airport' %}fa-plane
+                                                             {% elif booking.ride_type == 'rental' %}fa-clock
+                                                             {% else %}fa-route{% endif %}"></i>
+                                                {{ booking.get_ride_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ booking.pickup_location }}</td>
+                                        <td>
+                                            {% if booking.drop_location %}
+                                                {{ booking.drop_location }}
+                                            {% elif booking.rental_hours %}
+                                                {{ booking.rental_hours }} hours rental
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ booking.pickup_date }}<br>
+                                            <small class="text-muted">{{ booking.pickup_time }}</small>
+                                        </td>
+                                        <td>₹{{ booking.get_total_price }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success" onclick="updateBookingStatus('{{ booking.id }}', 'CONFIRMED')">
+                                                <i class="fas fa-check"></i> Accept
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
+                            <h5>No Available Bookings</h5>
+                            <p class="text-muted">There are no new bookings available at the moment.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -116,31 +187,36 @@
         });
     });
 
-    // Booking status update function
-    function updateBookingStatus(bookingId, status) {
-        if (confirm('Are you sure you want to ' + status.toLowerCase() + ' this booking?')) {
-            fetch(`/driver/bookings/${bookingId}/update-status/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ status: status })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Failed to update booking status. Please try again.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            });
+    // Function to update booking status
+    function updateBookingStatus(bookingId, newStatus) {
+        if (!confirm('Are you sure you want to update this booking?')) {
+            return;
         }
+
+        fetch(`/api/bookings/${bookingId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Failed to update booking status: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the booking status');
+        });
     }
 </script>
 {% endblock %}
+
 {% endblock %} 

@@ -13,4 +13,7 @@ urlpatterns = [
     # Review URLs
     path('booking/<int:booking_pk>/review/', views.create_review, name='create_review'),
     path('reviews/', views.review_list, name='review_list'),
+    
+    # API endpoints
+    path('api/bookings/<int:booking_id>/update-status/', views.update_booking_status, name='update_booking_status'),
 ] 

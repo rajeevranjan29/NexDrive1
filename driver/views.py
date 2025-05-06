@@ -4,6 +4,8 @@ from django.contrib import messages
 from core.models import Driver, Vehicle
 from django.contrib.auth import login
 from core.forms import DriverRegistrationForm
+from django.utils import timezone
+from ride.models import Booking
 
 def register(request):
     if request.method == 'POST':
@@ -64,10 +66,19 @@ def profile(request):
 def bookings(request):
     try:
         driver = request.user.driver
+        # Get bookings assigned to this driver
+        my_bookings = driver.bookings.all().order_by('-pickup_date', '-pickup_time')
+        
+        # Get available bookings (pending bookings with no driver assigned)
+        available_bookings = Booking.objects.filter(
+            status='pending',
+            driver__isnull=True,
+            pickup_date__gte=timezone.now().date()
+        ).order_by('pickup_date', 'pickup_time')
+        
         context = {
-            'pending_bookings': driver.bookings.filter(status='pending').order_by('pickup_date', 'pickup_time'),
-            'confirmed_bookings': driver.bookings.filter(status='confirmed').order_by('pickup_date', 'pickup_time'),
-            'completed_bookings': driver.bookings.filter(status='completed').order_by('-pickup_date', '-pickup_time')[:10]
+            'my_bookings': my_bookings,
+            'available_bookings': available_bookings,
         }
         return render(request, 'driver/bookings.html', context)
     except Driver.DoesNotExist:
